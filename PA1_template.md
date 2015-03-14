@@ -1,16 +1,18 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
----
+# Reproducible Research: Peer Assessment 1
 
 
 ## Loading and preprocessing the data
 
-```{r loaddata}
-library("lubridate")
 
+```r
+library("lubridate")
+```
+
+```
+## Warning: package 'lubridate' was built under R version 3.1.3
+```
+
+```r
 knitr::opts_chunk$set(warning=FALSE, message=FALSE, fig.path='figures/')
 
 setwd("G:\\DataScience\\5-ReproResearch\\Assignment1\\RepData_PeerAssessment1")
@@ -26,32 +28,33 @@ addTS <- function (x) {
 # Read raw data
 rawdata <- read.csv("activity.csv")
 rawdata$DT <- ymd(rawdata$date) + (rawdata$interval %/% 100 * 60 + rawdata$interval %% 100) * 60
-
 ```
 
 ## What is mean total number of steps taken per day?
 
 
-```{r}
 
+```r
 stepsPerDay <- aggregate(steps ~ date, rawdata, sum, na.action = na.pass)
 
 meanStepsPerDay <- mean(stepsPerDay$steps, na.rm=TRUE)
 medianStepsPerDay <- median(stepsPerDay$steps, na.rm=TRUE)
-
 ```
 
 ### A histogram of the total number of steps taken each day
 
-```{r histogramsteps}
+
+```r
 library(ggplot2)
 library(scales)
 qplot(steps, data=stepsPerDay, geom="histogram", binwidth = 2000)
 ```
 
+![](figures/histogramsteps-1.png) 
+
 ### Calculate and report the mean and median total number of steps taken per day
 
-The mean number of steps taken per day is `r meanStepsPerDay`, the median number of steps is `r medianStepsPerDay`.
+The mean number of steps taken per day is 1.0766189\times 10^{4}, the median number of steps is 10765.
 
 
 ## What is the average daily activity pattern?
@@ -60,7 +63,8 @@ The mean number of steps taken per day is `r meanStepsPerDay`, the median number
 and the average number of steps taken, averaged across all days (y-axis)
 
 
-```{r dailyactivitypattern}
+
+```r
 stepsPerInterval <- aggregate(steps ~ interval, rawdata, mean, na.rm=FALSE)
 stepsPerInterval$TS <- addTS(stepsPerInterval)
 
@@ -70,15 +74,18 @@ ggplot(data = stepsPerInterval, aes(TS, steps)) + geom_line() +
   ylab( "Number of Steps")
 ```
 
+![](figures/dailyactivitypattern-1.png) 
+
 2. Which 5-minute interval, on average across all the days in the dataset,
 contains the maximum number of steps?
 
-```{r}
+
+```r
 maxStepsInterval <- stepsPerInterval[ which(stepsPerInterval$steps == max(stepsPerInterval$steps)),]
 maxStepsTime <- format(maxStepsInterval$TS[1], format="%H:%M")
 ```
 
-The time interval `r maxStepsTime` contains the maximum number of steps.
+The time interval 08:35 contains the maximum number of steps.
 
 
 ## Imputing missing values
@@ -86,25 +93,28 @@ The time interval `r maxStepsTime` contains the maximum number of steps.
 **1. Calculate and report the total number of missing values in the dataset
 (i.e. the total number of rows with NAs)**
 
-```{r}
+
+```r
 cntNA <- sum(is.na(rawdata$steps))
 ```
 
-There are `r cntNA` rows with NAs in the dataset.
+There are 2304 rows with NAs in the dataset.
 
 
 **2. Devise a strategy for filling in all of the missing values in the dataset. The
 strategy does not need to be sophisticated. For example, you could use
 the mean/median for that day, or the mean for that 5-minute interval, etc.**
 
-```{r}
+
+```r
 avgStepsPerInterval <- aggregate(steps ~ interval, rawdata, mean, na.rm=TRUE)
 ```
 
 **3. Create a new dataset that is equal to the original dataset but with the
 missing data filled in.**
 
-```{r}
+
+```r
 # Function to 
 myReplacer <- function(x) {
   
@@ -125,9 +135,15 @@ rawdata$amendedSteps <- apply(rawdata, 1, myReplacer)
 
 **4. Make a histogram of the total number of steps taken each day.**
 
-```{r imputedhistogram}
+
+```r
 stepsPerDayAmend <- aggregate(amendedSteps ~ date, rawdata, sum, na.rm=TRUE)
 qplot(amendedSteps, data=stepsPerDayAmend, geom="histogram", binwidth = 2000)
+```
+
+![](figures/imputedhistogram-1.png) 
+
+```r
 amendedMeanStepsPerDay <- mean(stepsPerDayAmend$amendedSteps)
 amendedMedianStepsPerDay <- median(stepsPerDayAmend$amendedSteps)
 ```
@@ -135,13 +151,20 @@ amendedMedianStepsPerDay <- median(stepsPerDayAmend$amendedSteps)
 **Calculate and report the mean and median total number of steps taken per day. Do
 these values differ from the estimates from the first part of the assignment?**
 
-```{r}
+
+```r
 # Create output table to compare mean/median
 Category <- c("RawData", "AmendedData")
 Mean <- c(meanStepsPerDay, amendedMeanStepsPerDay )
 Median <- c(medianStepsPerDay, amendedMedianStepsPerDay)
 df <- data.frame(Category, Mean, Median)
 df
+```
+
+```
+##      Category     Mean   Median
+## 1     RawData 10766.19 10765.00
+## 2 AmendedData 10766.19 10766.19
 ```
 ?r
 There is no difference for the mean, and a small difference for the median.
@@ -150,13 +173,23 @@ There is no difference for the mean, and a small difference for the median.
 daily number of steps?**
 
 
-```{r}
 
-
+```r
 summary(stepsPerDay$steps)
+```
 
+```
+##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA's 
+##      41    8841   10760   10770   13290   21190       8
+```
+
+```r
 summary(stepsPerDayAmend$amendedSteps)
+```
 
+```
+##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##      41    9819   10770   10770   12810   21190
 ```
 Imputing the number of steps reduces the standard deviation. 
 
@@ -167,8 +200,8 @@ Imputing the number of steps reduces the standard deviation.
 and "weekend" indicating whether a given date is a weekday or weekend
 day.**
 
-```{r}
 
+```r
 # Function to create the factor variable for "weekday/weekend"
 WeekdayFactor <- function (x) {  
   if(as.POSIXlt(x)$wday <=5) {
@@ -188,7 +221,8 @@ rawdata$WD <- factor(sapply(rawdata$DT, WeekdayFactor))
 5-minute interval (x-axis) and the average number of steps taken, averaged
 across all weekday days or weekend days (y-axis). **
 
-```{r weekdayvsweekend}
+
+```r
 library(dplyr)
 
 # get mean steps by day and interval
@@ -206,5 +240,6 @@ ggplot(avgSteps, aes(TS, steps)) +
   scale_x_datetime(labels = date_format("%H:%M") ) + 
   xlab("") + 
   ylab( "Number of Steps")
-
 ```
+
+![](figures/weekdayvsweekend-1.png) 
